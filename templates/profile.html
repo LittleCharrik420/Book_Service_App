@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль пользователя - BookService{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-container">
+        <h1>Мой профиль</h1>
+        
+        <div class="profile-content">
+            <div class="profile-info">
+                <h2 id="profile-username">Загрузка...</h2>
+                
+                <form id="profile-form" class="profile-form">
+                    <div class="form-group">
+                        <label for="full_name">Полное имя:</label>
+                        <input 
+                            type="text" 
+                            id="full_name" 
+                            class="form-input"
+                            placeholder="Ваше полное имя"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            class="form-input"
+                            placeholder="Ваш email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio">Биография:</label>
+                        <textarea 
+                            id="bio" 
+                            class="form-textarea"
+                            placeholder="Расскажите о себе..."
+                            rows="4"
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Сохранить изменения</button>
+                </form>
+
+                <div class="profile-stats">
+                    <div class="stat">
+                        <span class="stat-label">Закладки:</span>
+                        <span class="stat-value" id="bookmarks-count">0</span>
+                    </div>
+                </div>
+
+                <div id="success-message" class="success-message" style="display: none;">
+                    Профиль успешно обновлен!
+                </div>
+                <div id="error-message" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUserProfile();
+        
+        document.getElementById('profile-form').addEventListener('submit', handleProfileUpdate);
+    });
+
+    async function loadUserProfile() {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const response = await fetch('/api/users/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Не удалось загрузить профиль');
+            }
+
+            const user = await response.json();
+            
+            document.getElementById('profile-username').textContent = `@${user.username}`;
+            document.getElementById('full_name').value = user.full_name || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('bio').value = user.bio || '';
+            document.getElementById('bookmarks-count').textContent = user.bookmarks_count || 0;
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('error-message').textContent = error.message;
+        }
+    }
+
+    async function handleProfileUpdate(event) {
+        event.preventDefault();
+        
+        const token = localStorage.getItem('token');
+        const full_name = document.getElementById('full_name').value;
+        const email = document.getElementById('email').value;
+        const bio = document.getElementById('bio').value;
+        const errorDiv = document.getElementById('error-message');
+        const successDiv = document.getElementById('success-message');
+
+        try {
+            const response = await fetch('/api/users/me', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    full_name: full_name || null,
+                    email: email,
+                    bio: bio || null
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка при обновлении профиля');
+            }
+
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}

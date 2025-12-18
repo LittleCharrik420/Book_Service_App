@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Book Service{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <a href="/" class="brand-logo">📚 BookService</a>
+            </div>
+            <div class="navbar-menu">
+                <ul class="navbar-list">
+                    <li><a href="/" class="nav-link">Каталог</a></li>
+                    <li id="bookmarks-nav" class="hidden">
+                        <a href="/bookmarks" class="nav-link">Закладки</a>
+                    </li>
+                    <li id="profile-nav" class="hidden">
+                        <a href="/profile" class="nav-link">Профиль</a>
+                    </li>
+                    <li id="logout-nav" class="hidden">
+                        <a href="#" class="nav-link" onclick="logout()">Выход</a>
+                    </li>
+                    <li id="auth-nav">
+                        <a href="/login" class="nav-link btn-login">Вход</a>
+                        <a href="/register" class="nav-link btn-register">Регистрация</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 BookService. Все права защищены.</p>
+    </footer>
+
+    <script src="/static/js/script.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

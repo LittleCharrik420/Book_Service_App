@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Мои закладки - BookService{% endblock %}
+
+{% block content %}
+<div class="bookmarks-page">
+    <div class="bookmarks-container">
+        <h1>Мои закладки</h1>
+        
+        <div class="bookmarks-grid" id="bookmarks-grid">
+            <div class="loading">Загрузка закладок...</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadBookmarks();
+    });
+
+    async function loadBookmarks() {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const response = await fetch('/api/bookmarks/', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Не удалось загрузить закладки');
+            }
+
+            const bookmarks = await response.json();
+            displayBookmarks(bookmarks);
+        } catch (error) {
+            document.getElementById('bookmarks-grid').innerHTML = 
+                `<p class="error">${error.message}</p>`;
+        }
+    }
+
+    function displayBookmarks(books) {
+        const grid = document.getElementById('bookmarks-grid');
+        
+        if (books.length === 0) {
+            grid.innerHTML = '<p class="no-results">У вас пока нет закладок</p>';
+            return;
+        }
+
+        grid.innerHTML = books.map(book => `
+            <div class="book-card">
+                <div class="book-cover">
+                    <img src="${book.cover_url || '/static/images/default-cover.png'}" 
+                         alt="${book.title}"
+                         onerror="this.src='/static/images/default-cover.png'">
+                </div>
+                <div class="book-info">
+                    <h3 class="book-title">${book.title}</h3>
+                    <p class="book-author">${book.author}</p>
+                    <div class="book-rating">
+                        <span class="stars">${'★'.repeat(Math.round(book.average_rating))}${'☆'.repeat(5-Math.round(book.average_rating))}</span>
+                        <span class="rating-value">${book.average_rating.toFixed(1)}</span>
+                    </div>
+                    <div class="book-actions">
+                        <a href="/book/${book.id}" class="btn-view">Подробнее</a>
+                        <button class="btn-remove" onclick="removeBookmark(${book.id})">Удалить</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function removeBookmark(bookId) {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/bookmarks/${bookId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка при удалении');
+            }
+
+            // Перезагрузка закладок
+            loadBookmarks();
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

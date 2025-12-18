@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог книг - BookService{% endblock %}
+
+{% block content %}
+<div class="catalog-page">
+    <div class="search-section">
+        <h1>Каталог книг</h1>
+        
+        <div class="search-filters">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Поиск по названию или автору..."
+                    onkeyup="searchBooks()"
+                >
+                <span class="search-icon">🔍</span>
+            </div>
+            
+            <div class="filter-box">
+                <select id="genre-filter" class="genre-select" onchange="filterByGenre()">
+                    <option value="">Все жанры</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="books-grid" id="books-grid">
+        <div class="loading">Загрузка книг...</div>
+    </div>
+
+    <div class="pagination">
+        <button class="btn-pagination" id="prev-btn" onclick="previousPage()" disabled>← Предыдущая</button>
+        <span id="page-info">Страница 1</span>
+        <button class="btn-pagination" id="next-btn" onclick="nextPage()">Следующая →</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentPage = 0;
+    const booksPerPage = 12;
+    let allBooks = [];
+    let searchQuery = '';
+    let selectedGenre = '';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadBooks();
+        loadGenres();
+        checkAuthStatus();
+    });
+
+    async function loadBooks(page = 0) {
+        try {
+            currentPage = page;
+            const skip = page * booksPerPage;
+            let url = `/api/books/?skip=${skip}&limit=${booksPerPage}`;
+            
+            if (searchQuery) {
+                url += `&search=${encodeURIComponent(searchQuery)}`;
+            }
+            if (selectedGenre) {
+                url += `&genre=${encodeURIComponent(selectedGenre)}`;
+            }
+
+            const response = await fetch(url);
+            const books = await response.json();
+            
+            displayBooks(books);
+            updatePagination(books.length);
+        } catch (error) {
+            console.error('Error loading books:', error);
+            document.getElementById('books-grid').innerHTML = 
+                '<p class="error">Ошибка при загрузке книг</p>';
+        }
+    }
+
+    function displayBooks(books) {
+        const grid = document.getElementById('books-grid');
+        if (books.length === 0) {
+            grid.innerHTML = '<p class="no-results">Книги не найдены</p>';
+            return;
+        }
+
+        grid.innerHTML = books.map(book => `
+            <div class="book-card">
+                <div class="book-cover">
+                    <img src="${book.cover_url || '/static/images/default-cover.png'}" 
+                         alt="${book.title}"
+                         onerror="this.src='/static/images/default-cover.png'">
+                </div>
+                <div class="book-info">
+                    <h3 class="book-title">${book.title}</h3>
+                    <p class="book-author">${book.author}</p>
+                    <div class="book-rating">
+                        <span class="stars">${'★'.repeat(Math.round(book.average_rating))}${'☆'.repeat(5-Math.round(book.average_rating))}</span>
+                        <span class="rating-value">${book.average_rating.toFixed(1)}</span>
+                    </div>
+                    <a href="/book/${book.id}" class="btn-view">Подробнее</a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function loadGenres() {
+        try {
+            const response = await fetch('/api/books/genre/list/all');
+            const genres = await response.json();
+            
+            const select = document.getElementById('genre-filter');
+            genres.forEach(genre => {
+                const option = document.createElement('option');
+                option.value = genre;
+                option.textContent = genre;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading genres:', error);
+        }
+    }
+
+    function searchBooks() {
+        searchQuery = document.getElementById('search-input').value;
+        currentPage = 0;
+        loadBooks();
+    }
+
+    function filterByGenre() {
+        selectedGenre = document.getElementById('genre-filter').value;
+        currentPage = 0;
+        loadBooks();
+    }
+
+    function updatePagination(booksCount) {
+        document.getElementById('page-info').textContent = `Страница ${currentPage + 1}`;
+        document.getElementById('prev-btn').disabled = currentPage === 0;
+        document.getElementById('next-btn').disabled = booksCount < booksPerPage;
+    }
+
+    function previousPage() {
+        if (currentPage > 0) {
+            loadBooks(currentPage - 1);
+        }
+    }
+
+    function nextPage() {
+        loadBooks(currentPage + 1);
+    }
+</script>
+{% endblock %}

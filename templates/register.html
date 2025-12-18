@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация - BookService{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <h1>Создание аккаунта</h1>
+        
+        <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label for="username">Имя пользователя:</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    required 
+                    class="form-input"
+                    placeholder="Выберите имя пользователя"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required 
+                    class="form-input"
+                    placeholder="Введите ваш email"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="full_name">Полное имя:</label>
+                <input 
+                    type="text" 
+                    id="full_name" 
+                    name="full_name" 
+                    class="form-input"
+                    placeholder="Ваше полное имя"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required 
+                    class="form-input"
+                    placeholder="Введите пароль (минимум 6 символов)"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password_confirm">Подтверждение пароля:</label>
+                <input 
+                    type="password" 
+                    id="password_confirm" 
+                    name="password_confirm" 
+                    required 
+                    class="form-input"
+                    placeholder="Повторите пароль"
+                >
+            </div>
+
+            <button type="submit" class="btn-primary">Зарегистрироваться</button>
+            
+            <div id="error-message" class="error-message"></div>
+        </form>
+
+        <p class="auth-link">
+            Уже есть аккаунт? <a href="/login">Войдите</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function handleRegister(event) {
+        event.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const full_name = document.getElementById('full_name').value;
+        const password = document.getElementById('password').value;
+        const password_confirm = document.getElementById('password_confirm').value;
+        const errorDiv = document.getElementById('error-message');
+        
+        // Проверка пароля
+        if (password !== password_confirm) {
+            errorDiv.textContent = 'Пароли не совпадают';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (password.length < 6) {
+            errorDiv.textContent = 'Пароль должен содержать минимум 6 символов';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/users/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    full_name: full_name || null,
+                    password: password
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Ошибка при регистрации');
+            }
+
+            const data = await response.json();
+            
+            // Сохранение токена
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            // Редирект на главную
+            window.location.href = '/';
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}
