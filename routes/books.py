@@ -40,7 +40,6 @@ def get_book(
     current_user: User = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Получить информацию о конкретной книге"""
     book = db.query(Book).filter(Book.id == book_id).first()
     
     if not book:
@@ -129,7 +128,6 @@ def create_book(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Создать новую книгу (только для администраторов)"""
     
     new_book = Book(**book_data.dict())
     db.add(new_book)
