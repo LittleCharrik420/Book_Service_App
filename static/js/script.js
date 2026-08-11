@@ -1,4 +1,3 @@
-// ========== Authentication & Navigation ==========
 
 function checkAuthStatus() {
     const token = localStorage.getItem('token');
@@ -8,13 +7,11 @@ function checkAuthStatus() {
     const logoutNav = document.getElementById('logout-nav');
 
     if (token) {
-        // Пользователь авторизован
         if (authNav) authNav.classList.add('hidden');
         if (profileNav) profileNav.classList.remove('hidden');
         if (bookmarksNav) bookmarksNav.classList.remove('hidden');
         if (logoutNav) logoutNav.classList.remove('hidden');
     } else {
-        // Пользователь не авторизован
         if (authNav) authNav.classList.remove('hidden');
         if (profileNav) profileNav.classList.add('hidden');
         if (bookmarksNav) bookmarksNav.classList.add('hidden');
@@ -28,12 +25,9 @@ function logout() {
     window.location.href = '/';
 }
 
-// Проверка статуса при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthStatus();
 });
-
-// ========== API Helper Functions ==========
 
 async function apiFetch(url, options = {}) {
     const token = localStorage.getItem('token');
@@ -49,7 +43,6 @@ async function apiFetch(url, options = {}) {
     });
 
     if (response.status === 401) {
-        // Токен истек или невалиден
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
@@ -57,8 +50,6 @@ async function apiFetch(url, options = {}) {
 
     return response;
 }
-
-// ========== Error Handling ==========
 
 function showError(elementId, message) {
     const element = document.getElementById(elementId);
@@ -79,8 +70,6 @@ function showSuccess(elementId, message) {
     }
 }
 
-// ========== Utility Functions ==========
-
 function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('ru-RU', {
@@ -100,8 +89,6 @@ function generateStars(rating) {
     return '★'.repeat(fullStars) + '☆'.repeat(emptyStars);
 }
 
-// ========== Local Storage Helpers ==========
-
 function getUser() {
     const userJson = localStorage.getItem('user');
     return userJson ? JSON.parse(userJson) : null;
@@ -114,8 +101,6 @@ function setUser(user) {
 function isAuthenticated() {
     return !!localStorage.getItem('token');
 }
-
-// ========== Form Helpers ==========
 
 function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
