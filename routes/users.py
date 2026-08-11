@@ -19,9 +19,6 @@ from database import get_db
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
-
-# ========== Registration & Login ==========
-
 @router.post("/register", response_model=TokenResponse)
 def register(
     user_data: UserCreate,
@@ -104,8 +101,6 @@ def update_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
-    # Проверка на уникальность email
     if user_data.email and user_data.email != current_user.email:
         existing_email = db.query(User).filter(User.email == user_data.email).first()
         if existing_email:
